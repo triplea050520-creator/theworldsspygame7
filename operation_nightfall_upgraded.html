@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operation: Nightfall</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+    :root {
+      --bg: #090700;
+      --panel: rgba(28, 20, 0, 0.72);
+      --amber: #ffaa00;
+      --amber2: #ffcc4a;
+      --orange: #ff7800;
+      --red: #ff4422;
+      --ok: #44ffaa;
+      --dim: #8a6000;
+      --dimmer: #4a3400;
+      --border: rgba(255,170,0,.24);
+      --text: #ffe1a1;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: #080500;
+      color: var(--amber);
+      font-family: 'Share Tech Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 18% 8%, rgba(255,170,0,.18), transparent 28%),
+        radial-gradient(circle at 84% 18%, rgba(255,80,0,.16), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(255,120,0,.12), transparent 40%),
+        linear-gradient(135deg, #0d0900, #030200 48%, #120900);
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.08} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%,75%{transform:translateX(-10px)} 50%{transform:translateX(10px)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes popIn { 0%{transform:scale(.3);opacity:0} 65%{transform:scale(1.18)} 100%{transform:scale(1);opacity:1} }
+    @keyframes defused { 0%{letter-spacing:.05em;opacity:0;filter:blur(12px)} 100%{letter-spacing:.35em;opacity:1;filter:blur(0)} }
+    @keyframes ambglow { 0%,100%{text-shadow:0 0 12px rgba(255,170,0,.40),0 0 34px rgba(255,120,0,.15)} 50%{text-shadow:0 0 30px rgba(255,190,0,.95),0 0 75px rgba(255,120,0,.45),0 0 120px rgba(255,60,20,.18)} }
+    @keyframes sweep { from{transform:translateX(-140%) skewX(-18deg)} to{transform:translateX(280%) skewX(-18deg)} }
+    @keyframes scan { 0%{transform:translateY(-12vh);opacity:0} 12%{opacity:.7} 100%{transform:translateY(112vh);opacity:0} }
+    @keyframes alarmFlash { 0%,100%{box-shadow: inset 0 0 0 rgba(255,0,0,0)} 50%{box-shadow: inset 0 0 160px rgba(255,0,0,.34)} }
+    @keyframes sirenText { 0%,100%{color:var(--red);text-shadow:0 0 26px rgba(255,60,30,.7)} 50%{color:#fff0b2;text-shadow:0 0 40px rgba(255,170,0,.9)} }
+    @keyframes staticJitter { 0%{transform:translate(0,0)} 20%{transform:translate(-2px,1px)} 40%{transform:translate(2px,-1px)} 60%{transform:translate(-1px,-2px)} 80%{transform:translate(1px,2px)} 100%{transform:translate(0,0)} }
+    @keyframes meterPulse { 0%,100%{height:18%} 50%{height:90%} }
+    @keyframes radarSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes flashFull { 0%{opacity:0} 8%{opacity:.92} 16%{opacity:.05} 24%{opacity:.55} 100%{opacity:0} }
+
+    .root {
+      min-height: 100vh;
+      position: relative;
+      isolation: isolate;
+      padding: 26px 16px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background:
+        linear-gradient(90deg, rgba(255,170,0,.025) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,170,0,.022) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 20%, rgba(255,170,0,.14), transparent 48%);
+      background-size: 54px 54px, 54px 54px, auto;
+    }
+
+    .root::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,180,0,.04) 0px, rgba(255,180,0,.04) 1px, transparent 1px, transparent 5px),
+        radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,.72) 100%);
+      mix-blend-mode: screen;
+    }
+
+    .root::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 80px;
+      z-index: 99;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(255,170,0,.14), transparent);
+      animation: scan 7s linear infinite;
+    }
+
+    .root.critical {
+      animation: alarmFlash .82s infinite;
+    }
+
+    .stage {
+      width: 100%;
+      max-width: 920px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hud-panel {
+      position: relative;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(135deg, rgba(255,170,0,.105), transparent 40%),
+        linear-gradient(180deg, rgba(22,15,0,.88), rgba(8,5,0,.78));
+      box-shadow:
+        0 0 0 1px rgba(255,210,70,.035) inset,
+        0 22px 70px rgba(0,0,0,.36),
+        0 0 36px rgba(255,170,0,.08);
+      backdrop-filter: blur(10px);
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .hud-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, var(--amber) 0 46px, transparent 46px calc(100% - 46px), var(--amber) calc(100% - 46px)),
+        linear-gradient(90deg, var(--amber) 0 46px, transparent 46px calc(100% - 46px), var(--amber) calc(100% - 46px));
+      background-size: 100% 2px;
+      background-position: top, bottom;
+      background-repeat: no-repeat;
+      opacity: .52;
+    }
+
+    .title-card {
+      max-width: 800px;
+      margin: 34px auto 0;
+      padding: 30px 26px 26px;
+      text-align: center;
+    }
+
+    .op-label { font-size: 9px; letter-spacing: 5px; color: var(--dimmer); }
+    .big-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(36px, 8vw, 74px);
+      font-weight: 900;
+      color: var(--amber);
+      letter-spacing: .16em;
+      animation: ambglow 3s ease infinite;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 8px 18px;
+      border: 1px solid rgba(255,170,0,.45);
+      background: linear-gradient(90deg, rgba(255,170,0,.13), rgba(255,90,0,.06));
+      color: var(--amber2);
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 4px;
+    }
+
+    .typed-box {
+      margin-top: 22px;
+      padding: 22px 24px;
+      min-height: 90px;
+      text-align: left;
+      border-radius: 18px;
+      border: 1px solid rgba(255,170,0,.20);
+      background: rgba(0,0,0,.24);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,170,0,.18);
+      background: linear-gradient(180deg, rgba(255,170,0,.075), rgba(0,0,0,.16));
+      text-align: left;
+    }
+    .stat small { display: block; color: var(--dimmer); font-size: 9px; letter-spacing: 3px; }
+    .stat strong { display: block; margin-top: 7px; color: var(--amber2); font-size: 13px; }
+
+    .warning-box {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,120,0,.24);
+      background: linear-gradient(135deg, rgba(255,120,0,.12), rgba(255,170,0,.04));
+      text-align: left;
+    }
+    .warning-box small { color: var(--orange); letter-spacing: 4px; font-size: 9px; }
+    .warning-box p { color: #b67828; font-size: 12px; line-height: 1.8; margin-top: 7px; }
+
+    button {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      background: transparent;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 34%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.20), transparent);
+      transform: translateX(-140%) skewX(-18deg);
+      pointer-events: none;
+    }
+    button:hover::after { animation: sweep .75s ease; }
+
+    .button-row { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-primary {
+      flex: 2;
+      padding: 17px 18px;
+      border: 1px solid rgba(255,170,0,.58);
+      color: #ffe1a1;
+      background: linear-gradient(135deg, rgba(255,170,0,.18), rgba(255,90,0,.10));
+      box-shadow: 0 0 30px rgba(255,170,0,.14);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(255,170,0,.27), rgba(255,90,0,.16));
+      box-shadow: 0 0 45px rgba(255,170,0,.24);
+    }
+    .btn-secondary {
+      flex: 1;
+      padding: 17px 18px;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      background: rgba(0,0,0,.12);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+    .btn-secondary:hover { color: var(--amber2); border-color: rgba(255,170,0,.45); }
+
+    .topbar {
+      width: 100%;
+      max-width: 920px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 16px 18px;
+    }
+    .op-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--amber);
+      letter-spacing: 4px;
+      margin-top: 4px;
+      text-shadow: 0 0 20px rgba(255,170,0,.35);
+    }
+    .difficulty { font-size: 9px; letter-spacing: 3px; color: var(--orange); margin-top: 4px; }
+    .timer-wrap { text-align: center; min-width: 210px; }
+    .timer-label { font-size: 9px; letter-spacing: 4px; color: var(--dim); margin-bottom: 4px; }
+    .timer {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(30px, 6vw, 52px);
+      font-weight: 900;
+      color: var(--amber);
+      letter-spacing: .06em;
+      text-shadow: 0 0 18px rgba(255,170,0,.55);
+    }
+    .timer.critical {
+      animation: sirenText .7s infinite;
+    }
+    .print-btn-wrap { text-align: right; }
+
+    .alarm-banner {
+      display: none;
+      width: 100%;
+      max-width: 920px;
+      margin-bottom: 16px;
+      padding: 12px 18px;
+      text-align: center;
+      border-radius: 18px;
+      border: 1px solid rgba(255,40,20,.58);
+      background: linear-gradient(90deg, rgba(255,0,0,.18), rgba(255,170,0,.12), rgba(255,0,0,.18));
+      color: #fff0b2;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      letter-spacing: 4px;
+      box-shadow: 0 0 44px rgba(255,40,20,.22);
+    }
+    .alarm-banner.active { display: block; animation: blink .45s infinite; }
+
+    .progress-wrap {
+      width: 100%;
+      max-width: 920px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .progress-bars { display: flex; gap: 6px; flex: 1; }
+    .bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,170,0,.09);
+      border: 1px solid rgba(255,170,0,.12);
+      overflow: hidden;
+    }
+    .bar.done, .bar.current {
+      background: linear-gradient(90deg, var(--amber), var(--orange));
+      box-shadow: 0 0 16px rgba(255,170,0,.38);
+    }
+    .bar.current { opacity: .78; }
+    .progress-count { color: var(--dimmer); font-size: 10px; letter-spacing: 2px; }
+
+    .dashboard {
+      width: 100%;
+      max-width: 920px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .code-panel {
+      padding: 18px 18px 20px;
+      text-align: center;
+    }
+    .section-label { color: var(--dimmer); font-size: 9px; letter-spacing: 4px; margin-bottom: 13px; }
+    .code-slots { display: flex; justify-content: center; gap: 12px; }
+    .slot {
+      width: clamp(48px, 10vw, 68px);
+      height: clamp(56px, 11vw, 78px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,170,0,.16);
+      background: rgba(0,0,0,.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      color: rgba(255,170,0,.24);
+      font-size: 9px;
+      letter-spacing: 1px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,.25);
+    }
+    .slot.revealed {
+      color: #fff0b2;
+      font-size: clamp(20px,4vw,30px);
+      font-weight: 900;
+      border-color: rgba(255,170,0,.60);
+      background: linear-gradient(180deg, rgba(255,170,0,.20), rgba(255,120,0,.08));
+      box-shadow: 0 0 26px rgba(255,170,0,.22), inset 0 0 20px rgba(255,170,0,.05);
+    }
+    .slot.current {
+      border-color: rgba(255,120,0,.45);
+      color: rgba(255,120,0,.42);
+    }
+
+    .side-gauge {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 126px;
+    }
+    .radar {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,170,0,.28);
+      background:
+        radial-gradient(circle, transparent 28%, rgba(255,170,0,.07) 29%, transparent 31%),
+        radial-gradient(circle, transparent 58%, rgba(255,170,0,.07) 59%, transparent 61%),
+        conic-gradient(from 0deg, rgba(255,170,0,.45), transparent 30%, transparent 100%);
+      animation: radarSpin 2.8s linear infinite;
+      box-shadow: 0 0 22px rgba(255,170,0,.14);
+    }
+    .gauge-text {
+      margin-top: 10px;
+      color: var(--dimmer);
+      font-size: 9px;
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    .puzzle-card {
+      width: 100%;
+      max-width: 920px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    .puzzle-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(255,170,0,.16);
+      padding-bottom: 15px;
+      margin-bottom: 16px;
+    }
+    .module-meta { color: var(--dimmer); font-size: 9px; letter-spacing: 4px; margin-bottom: 7px; }
+    .module-title {
+      color: #fff0b2;
+      font-size: clamp(20px,4.5vw,32px);
+      letter-spacing: 3px;
+      font-family: 'Orbitron', sans-serif;
+      text-shadow: 0 0 22px rgba(255,170,0,.28);
+    }
+    .category {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,120,0,.30);
+      color: var(--orange);
+      background: rgba(255,120,0,.07);
+      font-size: 9px;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    .briefing {
+      color: #a87930;
+      font-size: 13px;
+      line-height: 1.75;
+      font-style: italic;
+      margin-bottom: 18px;
+    }
+    .classified {
+      border: 1px solid rgba(255,170,0,.18);
+      border-radius: 18px;
+      padding: 18px 20px;
+      background:
+        linear-gradient(90deg, rgba(255,170,0,.035) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,170,0,.025) 1px, transparent 1px),
+        rgba(2,1,0,.46);
+      background-size: 28px 28px;
+      box-shadow: inset 0 0 30px rgba(0,0,0,.30);
+    }
+    .line {
+      font-size: 13px;
+      line-height: 2.05;
+      white-space: pre-wrap;
+      color: #a87930;
+    }
+    .line.data { color: #ffd15d; text-shadow: 0 0 12px rgba(255,170,0,.12); }
+    .line.head { color: var(--orange); letter-spacing: 1px; }
+    .hint-box {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,120,0,.30);
+      background: rgba(255,120,0,.06);
+      color: #d28338;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .hint-box span { font-size: 9px; letter-spacing: 3px; color: var(--orange); }
+
+    .input-row {
+      width: 100%;
+      max-width: 920px;
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 14px;
+    }
+    .answer-label {
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--dimmer);
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 13px 15px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,170,0,.38);
+      background: rgba(0,0,0,.28);
+      color: #fff0b2;
+      outline: none;
+      font-size: 15px;
+      caret-color: var(--orange);
+      box-shadow: inset 0 0 20px rgba(0,0,0,.25);
+    }
+    input:focus {
+      border-color: rgba(255,120,0,.58);
+      box-shadow: 0 0 20px rgba(255,120,0,.12), inset 0 0 20px rgba(0,0,0,.25);
+    }
+    .confirm, .hintbtn {
+      padding: 0 20px;
+      border: 1px solid rgba(255,170,0,.28);
+      color: var(--amber2);
+      background: rgba(255,170,0,.06);
+      font-size: 11px;
+      letter-spacing: 3px;
+      white-space: nowrap;
+    }
+    .confirm {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      color: #fff0b2;
+      border-color: rgba(255,120,0,.45);
+      background: linear-gradient(135deg, rgba(255,120,0,.16), rgba(255,170,0,.09));
+    }
+    .hintbtn { color: #d28338; }
+
+    .status {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-align: center;
+      margin-top: 2px;
+    }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--red); }
+    .shake { animation: shake .45s ease; }
+    .fade-up { animation: fadeUp .35s ease; }
+    .pop-in { animation: popIn .4s ease both; }
+
+    .flash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 250;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(255,210,80,.86), rgba(255,80,0,.28), transparent 70%);
+      opacity: 0;
+    }
+    .flash-screen.active { animation: flashFull .85s ease; }
+
+    .static-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 240;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        repeating-radial-gradient(circle at 20% 30%, rgba(255,255,255,.18) 0 1px, transparent 1px 3px),
+        repeating-linear-gradient(90deg, rgba(255,170,0,.12) 0 2px, transparent 2px 5px),
+        rgba(0,0,0,.20);
+      mix-blend-mode: screen;
+    }
+    .static-overlay.active {
+      opacity: .58;
+      animation: staticJitter .10s steps(2) infinite;
+    }
+
+    .sound-toggle {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 300;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,170,0,.36);
+      color: var(--amber2);
+      background: rgba(0,0,0,.45);
+      font-size: 10px;
+      letter-spacing: 2px;
+      backdrop-filter: blur(8px);
+    }
+
+    .end-screen {
+      justify-content: center;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255,170,0,.12), transparent 34%),
+        #080500;
+    }
+    .end-card {
+      width: min(560px, 100%);
+      padding: 34px 26px;
+    }
+    .end-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(32px,7vw,58px);
+      font-weight: 900;
+      letter-spacing: .2em;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 760px) {
+      .topbar { grid-template-columns: 1fr; text-align: center; }
+      .print-btn-wrap { text-align: center; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .button-row, .input-row { flex-direction: column; }
+      .answer-label { justify-content: center; }
+      .puzzle-head { flex-direction: column; align-items: stretch; }
+      .category { align-self: flex-start; }
+      .dashboard { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff !important; }
+      .no-print, .sound-toggle, .flash-screen, .static-overlay { display: none !important; }
+      .pw { padding: 20px; color: #000; font-family: 'Courier New', monospace; }
+      .pt { font-size: 20px; font-weight: bold; text-align: center; letter-spacing: 4px; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 6px; }
+      .ps { font-size: 10px; text-align: center; color: #666; letter-spacing: 3px; margin-bottom: 18px; }
+      .ptag { text-align: center; font-size: 11px; font-weight: bold; letter-spacing: 5px; border: 2px solid #000; padding: 4px; margin-bottom: 16px; }
+      .pm { border: 1px solid #000; padding: 14px 16px; margin-bottom: 13px; page-break-inside: avoid; }
+      .pmh { font-weight: bold; font-size: 12px; letter-spacing: 2px; border-bottom: 1px dashed #ccc; padding-bottom: 6px; margin-bottom: 9px; display: flex; justify-content: space-between; }
+      .pmc { font-weight: normal; font-size: 10px; color: #666; }
+      .pb { font-size: 10px; color: #555; font-style: italic; margin-bottom: 8px; }
+      .pl { font-size: 11px; line-height: 1.9; white-space: pre-wrap; }
+      .pa { margin-top: 12px; border-top: 1px solid #ddd; padding-top: 9px; font-size: 11px; }
+      .pbox { display: inline-block; min-width: 130px; height: 24px; border-bottom: 2px solid #000; margin-left: 8px; }
+      .pcode { border: 2px solid #000; padding: 14px; text-align: center; margin-top: 16px; }
+      .pcl { font-weight: bold; font-size: 14px; letter-spacing: 4px; margin-bottom: 12px; }
+      .pcsl { display: flex; justify-content: center; gap: 8px; }
+      .pcs { width: 46px; height: 46px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+      .pfoot { margin-top: 12px; font-size: 9px; color: #aaa; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="flash" class="flash-screen"></div>
+  <div id="static" class="static-overlay"></div>
+  <button id="soundToggle" class="sound-toggle no-print">SOUND: OFF</button>
+
+  <script>
+    const PUZZLES = [
+      {
+        id: 1,
+        codename: "GHOST FREQUENCY",
+        category: "DERIVED CAESAR",
+        briefing: "The cipher shift is not given directly — you must calculate it from a clue embedded in the puzzle before you can decode the message.",
+        lines: [
+          "CALCULATE THE SHIFT VALUE FIRST:",
+          "",
+          "  Take the alphabet position of the letter 'R'.",
+          "  Divide it by 3.",
+          "  The result is your Caesar shift.",
+          "",
+          "  (Alphabet positions: A=1, B=2, C=3 ... Z=26)",
+          "",
+          "NOW DECODE USING THAT SHIFT (subtract shift from each letter):",
+          "",
+          "  CIPHERTEXT:  M  ·  N  ·  U  ·  Y  ·  Z",
+          "",
+          "What 5-letter word does the decoded message spell?",
+        ],
+        hint: "R is the 18th letter. 18 ÷ 3 = 6. Shift each letter back by 6 positions.",
+        answer: "GHOST",
+        unlocks: 6,
+      },
+      {
+        id: 2,
+        codename: "RANKING ORDER",
+        category: "LOGIC DEDUCTION",
+        briefing: "Five operatives have been ranked by mission performance. Using only the clues below, identify who holds the 2nd position.",
+        lines: [
+          "OPERATIVES:  COBRA · FALCON · JACKAL · SPHINX · VIPER",
+          "RANKINGS:    1st (best) through 5th (worst)",
+          "",
+          "INTELLIGENCE CLUES:",
+          "",
+          "  ① SPHINX holds the 1st rank.",
+          "  ② VIPER ranks exactly one position better than COBRA.",
+          "     (Their rank numbers differ by 1, with VIPER higher.)",
+          "  ③ JACKAL holds the 5th rank.",
+          "  ④ FALCON ranks worse (higher number) than VIPER.",
+          "  ⑤ COBRA is not ranked in the top 2.",
+          "",
+          "What is the codename of the operative ranked 2nd?",
+        ],
+        hint: "Try COBRA=3 and COBRA=4. Only one satisfies all 5 clues simultaneously.",
+        answer: "VIPER",
+        unlocks: 2,
+      },
+      {
+        id: 3,
+        codename: "SCRAMBLED ASSET",
+        category: "ANAGRAM",
+        briefing: "An intercepted message contained a single scrambled word. The enemy shuffled its letters to prevent identification. Unscramble it.",
+        lines: [
+          "SCRAMBLED WORD:",
+          "",
+          "  E · L · I · C · E · N · S",
+          "",
+          "These 7 letters — rearranged — spell a word that",
+          "describes a spy's single greatest advantage in the field.",
+          "",
+          "It is not a name. It is a concept.",
+          "It is what every operative strives to maintain.",
+          "",
+          "What word do the letters spell?",
+        ],
+        hint: "Think about what makes a spy effective — the absence of noise, attention, or detection.",
+        answer: "SILENCE",
+        unlocks: 8,
+      },
+      {
+        id: 4,
+        codename: "THE PHANTOM NUMBER",
+        category: "PROPERTY RIDDLE",
+        briefing: "The vault combination is a number described by four simultaneous mathematical properties. Identify it and enter it as a word.",
+        lines: [
+          "Find the number that satisfies ALL four properties:",
+          "",
+          "  ①  Multiply it by any number — the result is always itself.",
+          "",
+          "  ②  Add it to any number — that number remains unchanged.",
+          "",
+          "  ③  It is the only number that is neither positive",
+          "     nor negative.",
+          "",
+          "  ④  Attempt to divide any number by it —",
+          "     the operation is mathematically impossible.",
+          "",
+          "Enter the number as a WORD.",
+        ],
+        hint: "This number sits at the exact centre of the number line. It is the origin.",
+        answer: "ZERO",
+        unlocks: 9,
+      },
+      {
+        id: 5,
+        codename: "LETTER EXTRACTION",
+        category: "POSITIONAL DECODE",
+        briefing: "The operative's codename was encoded by hiding one letter inside each of five words. Extract the correct letter from each word and read them in order.",
+        lines: [
+          "EXTRACT ONE LETTER FROM EACH WORD:",
+          "",
+          "  Word 1 :  'DARKNESS'   →  take the 1st letter",
+          "  Word 2 :  'OPERATION'  →  take the 3rd letter",
+          "  Word 3 :  'CELLULAR'   →  take the 4th letter",
+          "  Word 4 :  'TARGET'     →  take the 1st letter",
+          "  Word 5 :  'SIGNAL'     →  take the 5th letter",
+          "",
+          "Read the five extracted letters in order.",
+          "They spell the operative's codename.",
+          "",
+          "What is the codename?",
+        ],
+        hint: "D-A-R-K-N-E-S-S → 1st = D.  O-P-E-R-A-T-I-O-N → 3rd = E.  Continue for the rest.",
+        answer: "DELTA",
+        unlocks: 4,
+      },
+    ];
+
+    const TOTAL_TIME = 5 * 60;
+    const app = document.getElementById("app");
+    const flash = document.getElementById("flash");
+    const staticOverlay = document.getElementById("static");
+    const soundToggle = document.getElementById("soundToggle");
+
+    let screen = "intro";
+    let puzzleIdx = 0;
+    let unlockedDigits = [];
+    let input = "";
+    let time = TOTAL_TIME;
+    let showHint = false;
+    let status = null;
+    let latestPop = -1;
+    let timerId = null;
+    let introTyped = 0;
+    let introTypingId = null;
+    let soundEnabled = false;
+    let audioCtx = null;
+    let lastMinute = Math.floor(TOTAL_TIME / 60);
+    let criticalAlarmId = null;
+
+    const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    const esc = (s) => String(s).replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
+
+    soundToggle.onclick = () => {
+      soundEnabled = !soundEnabled;
+      soundToggle.textContent = soundEnabled ? "SOUND: ON" : "SOUND: OFF";
+      if (soundEnabled) {
+        ensureAudio();
+        beep(520, 0.08, "square", 0.045);
+        setTimeout(() => beep(780, 0.08, "square", 0.035), 90);
+      }
+    };
+
+    function ensureAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function beep(freq = 440, duration = 0.12, type = "sine", volume = 0.04) {
+      if (!soundEnabled) return;
+      ensureAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function alarmBurst() {
+      visualFlash();
+      staticBurst(700);
+      beep(180, 0.15, "sawtooth", 0.055);
+      setTimeout(() => beep(120, 0.18, "sawtooth", 0.05), 170);
+      setTimeout(() => beep(260, 0.13, "square", 0.04), 370);
+    }
+
+    function correctSound() {
+      beep(440, 0.07, "triangle", 0.04);
+      setTimeout(() => beep(660, 0.08, "triangle", 0.04), 80);
+      setTimeout(() => beep(880, 0.12, "triangle", 0.035), 170);
+    }
+
+    function errorSound() {
+      staticBurst(350);
+      beep(120, 0.17, "sawtooth", 0.05);
+      setTimeout(() => beep(85, 0.17, "sawtooth", 0.04), 120);
+    }
+
+    function visualFlash() {
+      flash.classList.remove("active");
+      void flash.offsetWidth;
+      flash.classList.add("active");
+      setTimeout(() => flash.classList.remove("active"), 900);
+    }
+
+    function staticBurst(ms = 500) {
+      staticOverlay.classList.add("active");
+      setTimeout(() => staticOverlay.classList.remove("active"), ms);
+    }
+
+    function startCriticalAlarm() {
+      if (criticalAlarmId || screen !== "game") return;
+      criticalAlarmId = setInterval(() => {
+        if (screen !== "game" || time > 60) {
+          clearInterval(criticalAlarmId);
+          criticalAlarmId = null;
+          return;
+        }
+        visualFlash();
+        beep(210, 0.10, "square", 0.035);
+        setTimeout(() => beep(155, 0.10, "square", 0.03), 140);
+      }, 2200);
+    }
+
+    function stopAllTimers() {
+      clearInterval(timerId);
+      clearInterval(criticalAlarmId);
+      criticalAlarmId = null;
+    }
+
+    function lineClass(line) {
+      if (!line) return "line";
+      if (
+        line.startsWith("CALCULATE") ||
+        line.startsWith("NOW DECODE") ||
+        line.startsWith("OPERATIVES") ||
+        line.startsWith("RANKINGS") ||
+        line.startsWith("INTELLIGENCE") ||
+        line.startsWith("SCRAMBLED") ||
+        line.startsWith("Find the number") ||
+        line.startsWith("EXTRACT") ||
+        line.startsWith("Read the")
+      ) return "line head";
+      if (line.startsWith("  ") || line.includes("·") || line.includes("→") || line.includes("①") || line.includes("②") || line.includes("③") || line.includes("④") || line.includes("⑤")) return "line data";
+      return "line";
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      if (screen !== "game") return;
+      lastMinute = Math.floor(time / 60);
+      timerId = setInterval(() => {
+        if (screen !== "game") return clearInterval(timerId);
+
+        time -= 1;
+        const minuteNow = Math.floor(time / 60);
+
+        if (minuteNow < lastMinute && time > 0) {
+          lastMinute = minuteNow;
+          alarmBurst();
+        }
+
+        if (time === 60) {
+          alarmBurst();
+          startCriticalAlarm();
+        }
+
+        if (time <= 0) {
+          screen = "failed";
+          renderFailed();
+        } else {
+          updateTimerOnly();
+        }
+      }, 1000);
+    }
+
+    function updateTimerOnly() {
+      const timer = document.querySelector("#timer");
+      const root = document.querySelector(".root");
+      const alarm = document.querySelector("#alarmBanner");
+      if (!timer) return;
+      const critical = time < 60;
+      timer.textContent = fmt(time);
+      timer.className = critical ? "timer critical" : "timer";
+      if (root) root.classList.toggle("critical", critical);
+      if (alarm) alarm.classList.toggle("active", critical);
+    }
+
+    function renderIntro() {
+      const msg = "CLASSIFIED TRANSMISSION. A DEVICE HAS BEEN ACTIVATED AT THE TARGET LOCATION. FIVE MODULES PROTECT THE DISARM CODE. DIFFICULTY RATING: HARD. YOU WILL NEED TO THINK. YOU HAVE FIVE MINUTES.";
+      app.innerHTML = `
+        <main class="root">
+          <section class="stage title-card hud-panel">
+            <div class="op-label">◈ OPERATION</div>
+            <div class="big-title">NIGHTFALL</div>
+            <div class="badge">◈ HARD DIFFICULTY ◈</div>
+
+            <div class="typed-box">
+              <span>${esc(msg.slice(0, introTyped))}</span><span style="animation:blink 1s infinite;color:var(--orange);">▋</span>
+            </div>
+
+            <div class="stat-grid">
+              ${[
+                ["⏱","TIME LIMIT","5:00 MINUTES"],
+                ["🔐","MODULES","5 · HARD"],
+                ["🔢","CODE LENGTH","5 DIGITS"],
+                ["✍","ANSWERS","WORDS — NOT NUMBERS"],
+              ].map(([ic,lb,vl]) => `
+                <div class="stat">
+                  <small>${ic} ${lb}</small>
+                  <strong>${vl}</strong>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="warning-box">
+              <small>◈ ACTIVE SYSTEMS</small>
+              <p>Every passing minute triggers static interference. Under one minute, emergency lights and alarm tones activate. Sound is optional and can be switched on using the button in the corner.</p>
+            </div>
+
+            <div class="button-row">
+              <button class="btn-primary" id="startBtn">⬛ BEGIN MISSION</button>
+              <button class="btn-secondary" id="printBtn">PRINT BRIEFING</button>
+            </div>
+          </section>
+        </main>
+      `;
+
+      document.getElementById("startBtn").onclick = () => {
+        if (soundEnabled) beep(360, 0.10, "square", 0.04);
+        screen = "game";
+        renderGame();
+        startTimer();
+      };
+      document.getElementById("printBtn").onclick = renderPrint;
+
+      clearTimeout(introTypingId);
+      if (introTyped < msg.length && screen === "intro") {
+        introTypingId = setTimeout(() => {
+          introTyped += 1;
+          renderIntro();
+        }, 22);
+      }
+    }
+
+    function renderPrint() {
+      app.innerHTML = `
+        <div class="pw">
+          <div class="no-print" style="padding:12px 16px;background:#1a1000;color:#ffaa00;font-family:monospace;margin-bottom:16px;display:flex;align-items:center;gap:16px;">
+            <span>⬛ Print dialog opening…</span>
+            <button id="backBtn" style="padding:5px 14px;background:transparent;border:1px solid #ffaa00;color:#ffaa00;cursor:pointer;font-family:monospace;">← BACK</button>
+          </div>
+          <div class="pt">OPERATION : NIGHTFALL</div>
+          <div class="ptag">◈ HARD DIFFICULTY ◈</div>
+          <div class="ps">CLASSIFIED FIELD BRIEFING · AGENT COPY · EYES ONLY</div>
+          <p class="pl" style="padding:10px;border:1px solid #ccc;margin-bottom:14px;color:#444;font-size:10px;">
+            MISSION: A device with an active detonation sequence is armed. Solve all 5 modules to retrieve the 5-digit disarm code.
+            Each module's correct answer is a word. Getting it right reveals one digit. Collect all 5 and enter the code before time expires. You have 5 minutes.
+          </p>
+          ${PUZZLES.map(p => `
+            <div class="pm">
+              <div class="pmh">
+                <span>MODULE ${String(p.id).padStart(2,"0")} · ${esc(p.codename)}</span>
+                <span class="pmc">[${esc(p.category)}]</span>
+              </div>
+              <div class="pb">${esc(p.briefing)}</div>
+              ${p.lines.map(l => `<div class="pl">${l ? esc(l) : "&nbsp;"}</div>`).join("")}
+              <div class="pa">ANSWER: <span class="pbox"></span></div>
+            </div>
+          `).join("")}
+          <div class="pcode">
+            <div class="pcl">DISARM CODE</div>
+            <div class="pcsl">${[1,2,3,4,5].map(n => `<div class="pcs">DIGIT<br>${n}</div>`).join("")}</div>
+          </div>
+          <div class="pfoot">OPERATION: NIGHTFALL · TOP SECRET · HARD · DESTROY AFTER USE</div>
+        </div>
+      `;
+      document.getElementById("backBtn").onclick = () => {
+        if (screen === "game") renderGame();
+        else renderIntro();
+      };
+      setTimeout(() => window.print(), 350);
+    }
+
+    function renderTopbar() {
+      const critical = time < 60;
+      return `
+        <header class="topbar hud-panel">
+          <div>
+            <div class="op-label">◈ OPERATION</div>
+            <div class="op-name">NIGHTFALL</div>
+            <div class="difficulty">HARD</div>
+          </div>
+          <div class="timer-wrap">
+            <div class="timer-label">TIME REMAINING</div>
+            <div id="timer" class="${critical ? "timer critical" : "timer"}">${fmt(time)}</div>
+          </div>
+          <div class="print-btn-wrap">
+            <button class="btn-secondary no-print" id="printGame" style="padding:10px 14px;display:inline-block;">PRINT</button>
+          </div>
+        </header>
+      `;
+    }
+
+    function renderProgress() {
+      return `
+        <section class="progress-wrap">
+          <div class="progress-bars">
+            ${PUZZLES.map((_, i) => `<div class="bar ${i < unlockedDigits.length ? "done" : i === puzzleIdx ? "current" : ""}"></div>`).join("")}
+          </div>
+          <div class="progress-count">${unlockedDigits.length} / 5</div>
+        </section>
+      `;
+    }
+
+    function renderDashboard() {
+      return `
+        <section class="dashboard">
+          <div class="code-panel hud-panel">
+            <div class="section-label">DISARM CODE — EACH MODULE UNLOCKS ONE DIGIT</div>
+            <div class="code-slots">
+              ${Array.from({ length: 5 }).map((_, i) => {
+                const revealed = i < unlockedDigits.length;
+                const isCurrent = i === unlockedDigits.length;
+                const isLatest = i === latestPop && revealed;
+                return `<div class="slot ${revealed ? "revealed" : ""} ${isCurrent ? "current" : ""} ${isLatest ? "pop-in" : ""}">${revealed ? unlockedDigits[i] : isCurrent ? "NEXT" : "—"}</div>`;
+              }).join("")}
+            </div>
+          </div>
+          <div class="side-gauge hud-panel">
+            <div class="radar"></div>
+            <div class="gauge-text">SIGNAL LOCK<br>${Math.max(0, Math.round((time / TOTAL_TIME) * 100))}%</div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderGame() {
+      const p = PUZZLES[puzzleIdx];
+      const critical = time < 60;
+      app.innerHTML = `
+        <main class="root ${critical ? "critical" : ""}">
+          ${renderTopbar()}
+          <div id="alarmBanner" class="alarm-banner ${critical ? "active" : ""}">⚠ FINAL MINUTE — EMERGENCY ALARM ACTIVE ⚠</div>
+          ${renderProgress()}
+          ${renderDashboard()}
+
+          <section class="puzzle-card hud-panel ${status === "err" ? "shake" : "fade-up"}">
+            <div class="puzzle-head">
+              <div>
+                <div class="module-meta">MODULE ${String(p.id).padStart(2,"0")} OF 05 · HARD</div>
+                <div class="module-title">${esc(p.codename)}</div>
+              </div>
+              <div class="category">${esc(p.category)}</div>
+            </div>
+
+            <div class="briefing">${esc(p.briefing)}</div>
+
+            <div class="classified">
+              ${p.lines.map(line => `<div class="${lineClass(line)}">${line ? esc(line) : "&nbsp;"}</div>`).join("")}
+            </div>
+
+            ${showHint ? `<div class="hint-box"><span>CLASSIFIED HINT › </span>${esc(p.hint)}</div>` : ""}
+          </section>
+
+          <section class="input-row">
+            <span class="answer-label">ANSWER:</span>
+            <input id="answerInput" value="${esc(input)}" placeholder="type your answer here…" autocomplete="off" />
+            <button id="confirmBtn" class="confirm" ${input.trim() ? "" : "disabled"}>CONFIRM</button>
+            <button id="hintBtn" class="hintbtn">${showHint ? "HIDE" : "HINT"}</button>
+          </section>
+
+          ${status === "ok" ? `<div class="status ok">✓ CORRECT — DIGIT ${p.unlocks} UNLOCKED</div>` : ""}
+          ${status === "err" ? `<div class="status err">✗ INCORRECT — TRY AGAIN</div>` : ""}
+        </main>
+      `;
+
+      document.getElementById("printGame").onclick = renderPrint;
+
+      const answerInput = document.getElementById("answerInput");
+      answerInput.focus();
+      answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
+      answerInput.addEventListener("input", e => { input = e.target.value; });
+      answerInput.addEventListener("keydown", e => {
+        if (e.key === "Enter" && input.trim()) handleSubmit();
+      });
+
+      document.getElementById("confirmBtn").onclick = handleSubmit;
+      document.getElementById("hintBtn").onclick = () => {
+        showHint = !showHint;
+        if (showHint) {
+          beep(300, 0.06, "triangle", 0.03);
+          staticBurst(180);
+        }
+        renderGame();
+      };
+    }
+
+    function handleSubmit() {
+      const val = input.trim().toUpperCase();
+      if (!val) return;
+      const p = PUZZLES[puzzleIdx];
+
+      if (val === p.answer) {
+        correctSound();
+        visualFlash();
+        unlockedDigits.push(p.unlocks);
+        latestPop = unlockedDigits.length - 1;
+        status = "ok";
+        renderGame();
+
+        setTimeout(() => {
+          status = null;
+          input = "";
+          showHint = false;
+          if (puzzleIdx + 1 >= PUZZLES.length) {
+            screen = "success";
+            renderSuccess();
+          } else {
+            puzzleIdx += 1;
+            renderGame();
+          }
+        }, 1400);
+      } else {
+        errorSound();
+        status = "err";
+        renderGame();
+        setTimeout(() => {
+          status = null;
+          input = "";
+          renderGame();
+        }, 1000);
+      }
+    }
+
+    function renderSuccess() {
+      stopAllTimers();
+      visualFlash();
+      app.innerHTML = `
+        <main class="root end-screen">
+          <section class="end-card hud-panel">
+            <div class="end-title" style="color:var(--ok);animation:defused 1.2s ease forwards;text-shadow:0 0 50px rgba(68,255,170,.8);">DEFUSED</div>
+            <div class="section-label" style="color:#2d8a5c;margin-bottom:30px;">DETONATION SEQUENCE TERMINATED</div>
+
+            <div class="code-panel hud-panel" style="max-width:100%;border-color:rgba(68,255,170,.38);">
+              <div class="section-label" style="color:#2d8a5c;">DISARM CODE</div>
+              <div class="code-slots">
+                ${unlockedDigits.map((d, i) => `<div class="slot revealed" style="color:var(--ok);border-color:rgba(68,255,170,.65);background:rgba(68,255,170,.08);animation:fadeUp .4s ease ${i * .12}s both;">${d}</div>`).join("")}
+              </div>
+            </div>
+
+            <div style="font-size:13px;color:#2d8a5c;line-height:1.9;margin-top:22px;">
+              Time remaining: <span style="color:var(--ok);">${fmt(time)}</span><br>
+              All 5 modules solved. Status: <span style="color:var(--ok);">MISSION ACCOMPLISHED</span>
+            </div>
+          </section>
+        </main>
+      `;
+    }
+
+    function renderFailed() {
+      stopAllTimers();
+      alarmBurst();
+      app.innerHTML = `
+        <main class="root end-screen critical">
+          <section class="end-card hud-panel">
+            <div class="end-title" style="color:var(--red);text-shadow:0 0 50px rgba(255,60,40,.8);">DETONATED</div>
+            <div class="section-label" style="color:#8a2a12;margin-bottom:30px;">TIME ELAPSED · MISSION FAILED</div>
+            <div style="font-size:13px;color:#8a401c;line-height:1.9;margin-bottom:32px;">
+              The device detonated before the disarm<br>code could be entered. Status: <span style="color:var(--red);">COMPROMISED</span>
+            </div>
+            <button class="btn-primary" id="retryBtn" style="display:inline-block;flex:none;padding:15px 32px;">RETRY MISSION</button>
+          </section>
+        </main>
+      `;
+      document.getElementById("retryBtn").onclick = () => window.location.reload();
+    }
+
+    renderIntro();
+  </script>
+</body>
+</html>
