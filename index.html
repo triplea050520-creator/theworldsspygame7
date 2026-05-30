@@ -91,10 +91,12 @@
       z-index: 99;
       pointer-events: none;
       background: linear-gradient(to bottom, transparent, rgba(255,170,0,.14), transparent);
-      animation: none;
+      animation:none;
     }
 
-    .root.critical { animation: none !important; }
+    .root.critical {
+      animation:none;
+    }
 
     .stage {
       width: 100%;
@@ -115,7 +117,7 @@
         0 0 36px rgba(255,170,0,.08);
       backdrop-filter: blur(10px);
       border-radius: 22px;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     .hud-panel::before {
@@ -206,7 +208,7 @@
 
     button {
       position: relative;
-      overflow-x: hidden;
+      overflow: hidden;
       border-radius: 14px;
       background: transparent;
       font-family: inherit;
@@ -321,7 +323,7 @@
       border-radius: 999px;
       background: rgba(255,170,0,.09);
       border: 1px solid rgba(255,170,0,.12);
-      overflow-x: hidden;
+      overflow: hidden;
     }
     .bar.done, .bar.current {
       background: linear-gradient(90deg, var(--amber), var(--orange));
@@ -559,7 +561,7 @@
     }
     .static-overlay.active {
       opacity: .58;
-      animation: staticJitter .10s steps(2) infinite;
+      animation:none;
     }
 
     .sound-toggle {
@@ -628,11 +630,11 @@
     }
   
 /* ─────────────────────────────────────────────
-   BOOTH-SAFE PATCH
-   Fixes:
-   - allows scrolling on smaller booth screens
-   - makes confirm / answer buttons easier to press
-   - removes startup flicker / heavy screen repaint effects
+   TRUE PHONE-SAFE PATCH
+   - Allows actual page scroll
+   - Stops intro re-render flicker
+   - Fixes confirm button enabling without pressing hint
+   - Keeps controls separated and tappable
    ───────────────────────────────────────────── */
 
 html, body {
@@ -640,47 +642,34 @@ html, body {
   height: auto !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  overscroll-behavior-y: contain;
+  touch-action: pan-y !important;
 }
 
 body {
-  animation: none !important;
+  position: static !important;
 }
 
 .root {
   min-height: 100svh !important;
   height: auto !important;
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
-  animation: none !important;
+  overflow: visible !important;
+  align-items: center;
+  padding-bottom: 44px !important;
 }
 
 .root::before,
-.root::after {
-  animation: none !important;
+.root::after,
+.static-overlay,
+.flash-screen {
   pointer-events: none !important;
 }
 
-.stage,
-.panel,
-.hud-panel,
-.title-card,
-.topbar,
-.progress-wrap,
-.code-wrap,
-.puzzle-card,
-.input-wrap,
-.input-row,
-.answer-row,
-.button-row {
-  max-width: min(940px, calc(100vw - 18px)) !important;
+.root::after {
+  display: none !important;
 }
 
-.panel,
-.hud-panel,
-.title-card,
-.puzzle-card {
-  overflow: visible !important;
+.root.critical {
+  animation: none !important;
 }
 
 .fade-up {
@@ -691,82 +680,55 @@ button,
 input {
   min-height: 48px !important;
   touch-action: manipulation !important;
-  position: relative !important;
-  z-index: 5 !important;
-}
-
-button::after {
-  display: none !important;
 }
 
 input {
   font-size: 16px !important;
 }
 
-.shake {
-  animation-duration: 0.22s !important;
-}
-
-.big-title,
-.badge,
-.difficulty,
-.timer.critical,
-.root.critical,
-.root.lockdown {
-  animation: none !important;
+.input-row,
+.answer-row,
+.input-wrap {
+  position: relative !important;
+  z-index: 20 !important;
 }
 
 @media (max-width: 760px), (max-height: 720px) {
   .root {
-    align-items: stretch !important;
-    padding: 12px 9px 34px !important;
+    display: block !important;
+    padding: 12px 10px 56px !important;
   }
 
   .stage,
   .topbar,
   .progress-wrap,
-  .code-wrap,
+  .dashboard,
   .puzzle-card,
-  .input-wrap,
   .input-row,
-  .answer-row {
+  .answer-row,
+  .input-wrap,
+  .title-card,
+  .hud-panel {
     width: 100% !important;
     max-width: 100% !important;
   }
 
-  .topbar {
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
-    text-align: center !important;
-    padding: 12px !important;
-  }
-
-  .print-btn-wrap {
-    text-align: center !important;
-  }
-
-  .timer-wrap {
-    min-width: 0 !important;
-  }
-
-  .stat-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  .button-row,
-  .input-wrap,
+  .topbar,
+  .dashboard,
   .input-row,
-  .answer-row {
+  .answer-row,
+  .input-wrap,
+  .button-row {
     display: flex !important;
     flex-direction: column !important;
     gap: 10px !important;
     align-items: stretch !important;
   }
 
-  .button-row > *,
-  .input-wrap > *,
   .input-row > *,
   .answer-row > *,
+  .input-wrap > *,
+  .button-row > *,
   input,
   button {
     width: 100% !important;
@@ -774,32 +736,36 @@ input {
   }
 
   .puzzle-card,
-  .panel,
+  .title-card,
   .hud-panel {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
+    overflow: visible !important;
   }
 
-  .typed-box {
-    font-size: 12px !important;
-    line-height: 1.65 !important;
+  .side-gauge {
+    display: none !important;
+  }
+
+  .big-title {
+    font-size: clamp(30px, 9vw, 58px) !important;
+  }
+
+  .typed-box,
+  .warning-box,
+  .briefing,
+  .classified {
+    line-height: 1.55 !important;
   }
 }
 
 @media (max-height: 620px) {
-  .title-card {
-    margin-top: 10px !important;
-    padding-top: 18px !important;
-    padding-bottom: 18px !important;
-  }
-
-  .big-title {
-    font-size: clamp(28px, 8vw, 52px) !important;
-  }
-
   .typed-box,
   .warning-box {
-    line-height: 1.55 !important;
+    max-height: none !important;
+  }
+
+  .message,
+  .status {
+    min-height: 18px !important;
   }
 }
 
@@ -1107,7 +1073,7 @@ input {
             <div class="badge">◈ HARD DIFFICULTY ◈</div>
 
             <div class="typed-box">
-              <span>${esc(msg.slice(0, introTyped))}</span><span style="animation:blink 1s infinite;color:var(--orange);">▋</span>
+              <span>${esc(msg)}</span><span style="animation:blink 1s infinite;color:var(--orange);">▋</span>
             </div>
 
             <div class="stat-grid">
@@ -1144,14 +1110,7 @@ input {
         startTimer();
       };
       document.getElementById("printBtn").onclick = renderPrint;
-
-      clearTimeout(introTypingId);
-      if (introTyped < msg.length && screen === "intro") {
-        introTypingId = setTimeout(() => {
-          introTyped += 1;
-          renderIntro();
-        }, 22);
-      }
+      introTyped = msg.length;
     }
 
     function renderPrint() {
@@ -1289,9 +1248,12 @@ input {
       document.getElementById("printGame").onclick = renderPrint;
 
       const answerInput = document.getElementById("answerInput");
-      answerInput.focus();
-      answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
-      answerInput.addEventListener("input", e => { input = e.target.value; });
+      // Focus disabled for booth phones/tablets to prevent scroll-jump flicker.
+      answerInput.addEventListener("input", e => {
+        input = e.target.value;
+        const confirmBtn = document.getElementById("confirmBtn");
+        if (confirmBtn) confirmBtn.disabled = !input.trim();
+      });
       answerInput.addEventListener("keydown", e => {
         if (e.key === "Enter" && input.trim()) handleSubmit();
       });
@@ -1391,17 +1353,17 @@ input {
   </script>
 
 <script>
-/* Booth-safe runtime patch: keep the page scrollable and buttons tappable. */
+/* Runtime phone-safe patch */
 (function(){
-  function unlockScroll(){
+  function applyPhoneSafe(){
     document.documentElement.style.overflowY = "auto";
     document.documentElement.style.height = "auto";
     document.body.style.overflowY = "auto";
     document.body.style.height = "auto";
   }
-  unlockScroll();
-  window.addEventListener("load", unlockScroll);
-  window.addEventListener("resize", unlockScroll);
+  applyPhoneSafe();
+  window.addEventListener("load", applyPhoneSafe);
+  window.addEventListener("resize", applyPhoneSafe);
 })();
 </script>
 
